@@ -7,7 +7,7 @@ window.ETE_CONFIG = {
 
   /* The API is served from the same domain as these files (CloudFront
      routes /api/* to it), so this path never needs to change. */
-  apiBase: "https://clinical-barrier-invalid-republic.trycloudflare.com/api",
+  apiBase: "https://definition-category-founded-switch.trycloudflare.com /api",
 
   privacyUrl: "https://www.neenopal.com/privacy-policy",
 
