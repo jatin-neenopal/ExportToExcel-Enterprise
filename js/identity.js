@@ -85,7 +85,23 @@
     if (s) post("/signout", { token: s.token }, { keepalive: true, timeoutMs: 8000 });
   }
 
+  /* Tableau Cloud/Server: popups and the extension's frame don't share
+     browser storage (Chrome partitions it by page). Sessions are therefore
+     handed between them through Tableau's dialog messages, and each window
+     keeps its own copy. adopt(null) clears this window's copy. */
+  function getSession() { return session(); }
+  function adopt(s) {
+    if (s && typeof s.token === "string" && typeof s.email === "string" &&
+        typeof s.expiresAt === "number" && s.expiresAt > Date.now()) {
+      write({ token: s.token, email: s.email, expiresAt: s.expiresAt });
+    } else {
+      clear();
+    }
+  }
+
   window.ETEIdentity = {
+    getSession: getSession,
+    adopt: adopt,
     isValidEmail: isValidEmail,
     isSignedIn: function () { return !CFG.required || !!session(); },
     getEmail: function () { var s = session(); return s ? s.email : null; },

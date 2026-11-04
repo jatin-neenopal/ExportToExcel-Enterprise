@@ -172,7 +172,11 @@
     var size = CFG.signIn.dialog;
     tableau.extensions.ui
       .displayDialogAsync(pageUrl("signin.html"), JSON.stringify(env), { width: size.width, height: size.height })
-      .then(after, function (err) { logDialogError(err); after(); });
+      .then(function (payload) {
+        var p = parsePayload(payload);
+        if (p && "session" in p) I.adopt(p.session); // save it in this frame's storage
+        after();
+      }, function (err) { logDialogError(err); after(); });
 
     function after() {
       dialogOpen = false;
@@ -226,6 +230,13 @@
     return u.toString();
   }
 
+  function parsePayload(payload) {
+    try {
+      var p = JSON.parse(payload || "null");
+      return p && typeof p === "object" ? p : null;
+    } catch (e) { return null; }
+  }
+
   function logDialogError(err) {
     var closedByUser = window.tableau && tableau.ErrorCodes &&
       err && err.errorCode === tableau.ErrorCodes.DialogClosedByUser;
@@ -240,11 +251,23 @@
     if (dialogOpen) return;
     dialogOpen = true;
     tableau.extensions.ui
-      .displayDialogAsync(pageUrl("showcase.html"), JSON.stringify(env), {
+      .displayDialogAsync(pageUrl("showcase.html"), JSON.stringify({
+        context: env.context,
+        tableauVersion: env.tableauVersion,
+        session: I.getSession(),        // so the popup shows "Signed in as…"
+        optOut: S.isOptedOut()
+      }), {
         width: CFG.dialog.width,
         height: CFG.dialog.height
       })
-      .then(done, function (err) { logDialogError(err); done(); });
+      .then(function (payload) {
+        var p = parsePayload(payload);
+        if (p) {
+          if ("session" in p) I.adopt(p.session);       // e.g. signed out in the popup
+          if (typeof p.optOut === "boolean") S.setOptOut(p.optOut);
+        }
+        done();
+      }, function (err) { logDialogError(err); done(); });
 
     function done() {
       dialogOpen = false;

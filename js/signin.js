@@ -182,7 +182,9 @@
         if (r.ok) {
           verify.textContent = "Signed in";
           if (inTableau) {
-            close(JSON.stringify({ email: r.data.email }));
+            // Hand the session to the extension: in Tableau Cloud the popup's
+            // storage is separate from the extension's.
+            close(JSON.stringify({ session: I.getSession() }));
           } else {
             $("done-msg").textContent = "Signed in as " + r.data.email + ". You can close this window.";
             show("done");
