@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign in to Export to Excel</title>
+  <link rel="stylesheet" href="./css/app.css">
+  <script src="./js/tableau.extensions.1.latest.js"></script>
+  <script src="./js/config.js"></script>
+  <script src="./js/email-rules.js"></script>
+  <script src="./js/api.js"></script>
+  <script src="./js/identity.js"></script>
+  <script src="./js/signin.js"></script>
+</head>
+<body>
+  <main class="sc si">
+    <div class="sc-bar">
+      <span class="sc-namebox">Sign in</span>
+      <span class="sc-fx" aria-hidden="true">fx</span>
+      <span class="sc-formula">Export to Excel</span>
+      <button type="button" class="sc-icon-btn" id="close" aria-label="Close">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+
+    <!-- Step 1: email -->
+    <form class="si-body" id="step-email" novalidate>
+      <h1 class="sc-title si-title">Sign in to export</h1>
+      <p class="si-lead" id="email-lead">Enter your email and we'll send you a 6-digit access code.</p>
+
+      <label class="si-label" for="email" id="email-label">Email</label>
+      <input class="si-input" id="email" name="email" type="email" autocomplete="email" inputmode="email"
+             placeholder="name@company.com" required aria-required="true" spellcheck="false" autocapitalize="off"
+             aria-describedby="email-hint email-err">
+      <p class="si-error" id="email-err" role="alert" hidden></p>
+      <p class="cf-hint" id="email-hint" hidden></p>
+
+      <button type="submit" class="sc-primary si-submit" id="send">Continue</button>
+
+      <p class="si-note">
+        We use your email to sign you in and to tell you about Export to Excel.
+        <button type="button" class="si-inline-link" data-privacy>Privacy policy</button>
+      </p>
+    </form>
+
+    <!-- Step 2: code -->
+    <form class="si-body" id="step-code" novalidate hidden>
+      <h1 class="sc-title si-title">Check your email</h1>
+      <p class="si-lead">We sent a 6-digit code to <strong id="sent-to"></strong>. It expires in 10 minutes.</p>
+
+      <label class="si-label" for="code">Access code</label>
+      <input class="si-input si-code" id="code" name="code" type="text" inputmode="numeric"
+             autocomplete="one-time-code" maxlength="7" pattern="[0-9]*" required aria-required="true" aria-describedby="code-err">
+      <p class="si-error" id="code-err" role="alert" hidden></p>
+
+      <button type="submit" class="sc-primary si-submit" id="verify">Verify and export</button>
+
+      <p class="si-links">
+        <span>Didn't get it? Check spam, or</span>
+        <button type="button" class="si-inline-link" id="resend">send a new code</button>
+        <span id="resend-wait" hidden></span>
+        <span aria-hidden="true">·</span>
+        <button type="button" class="si-inline-link" id="change">use a different email</button>
+      </p>
+    </form>
+
+    <!-- Done (only seen when previewing outside Tableau) -->
+    <div class="si-body" id="step-done" hidden>
+      <h1 class="sc-title si-title">You're signed in</h1>
+      <p class="si-lead" id="done-msg"></p>
+    </div>
+  </main>
+</body>
+</html>

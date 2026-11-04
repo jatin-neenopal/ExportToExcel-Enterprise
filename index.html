@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Export to Excel</title>
+
+  <link rel="stylesheet" href="./css/app.css">
+
+  <!-- Tableau Extensions API -->
+  <script src="./js/tableau.extensions.1.latest.js"></script>
+  <!-- ExcelJS (used by the export logic) -->
+  <script src="./js/exceljs.min.js"></script>
+
+  <!-- Free-version export logic, unchanged. It binds to #export_button. -->
+  <script src="./build_table_copy.js"></script>
+
+  <!-- Enterprise teaser (client side only) -->
+  <script src="./js/config.js"></script>
+  <script src="./js/email-rules.js"></script>
+  <script src="./js/api.js"></script>
+  <script src="./js/identity.js"></script>
+  <script src="./js/showcase-ui.js"></script>
+  <script src="./js/teaser.js"></script>
+</head>
+
+<body class="zone">
+  <div class="zone-root">
+
+    <!-- Small zones: export button + Enterprise button -->
+    <div class="zone-compact" id="compact">
+      <button id="export_button" type="button"
+              title="If you change the file name, keep .xlsx at the end (for example Marketing.xlsx).">
+        <span class="btn-ico" aria-hidden="true">
+          <svg viewBox="0 0 20 20"><path d="M10 3v9m0 0l-3.5-3.5M10 12l3.5-3.5M4 14.5V16h12v-1.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+        <span class="spinner" aria-hidden="true"></span>
+        <span class="btn-label">Export All to Excel</span>
+      </button>
+
+      <button class="ent-button" id="enterprise_button" type="button"
+              title="See what Export to Excel Enterprise adds" aria-label="See Export to Excel Enterprise">
+        <span class="btn-ico" aria-hidden="true">
+          <svg viewBox="0 0 20 20"><rect x="2.5" y="3.5" width="15" height="13" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M2.5 7.5h15M7.5 7.5v9" stroke="currentColor" stroke-width="1.6"/><path d="M13 10v4M11 12h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        </span>
+        <span class="ent-label">Enterprise</span>
+      </button>
+    </div>
+
+    <!-- Large zones: showcase shown in place (filled by teaser.js) -->
+    <div id="inline" hidden style="height:100%"></div>
+
+  </div>
+</body>
+</html>

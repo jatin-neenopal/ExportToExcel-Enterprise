@@ -1,0 +1,424 @@
+/* Export to Excel Enterprise teaser: shared styles.
+   Visual idea: the showcase is drawn as an Excel sheet (formula bar, column
+   letters, row numbers) with the Enterprise column selected. */
+
+:root {
+  --ink: #1b2a22;
+  --muted: #5e6f65;
+  --ledger: #1e6b45;      /* primary green, selection border */
+  --ledger-dark: #17573a;
+  --leaf: #e8f3ec;        /* header cells, selected column tint */
+  --grid: #dce3de;        /* gridlines */
+  --paper: #ffffff;
+  --page: #f6f9f7;
+  --focus: #1e6b45;
+  --font: Aptos, Calibri, "Segoe UI Variable Text", "Segoe UI", Carlito, system-ui, -apple-system, sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; height: 100%; }
+body {
+  font-family: var(--font);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+[hidden] { display: none !important; }
+
+/* ── Extension zone ────────────────────────────────────────────────────── */
+body.zone { background: transparent; overflow: hidden; }
+
+.zone-root { width: 100%; height: 100%; }
+
+.zone-compact {
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-size: 15px; /* set by teaser.js to fit the zone */
+}
+
+#export_button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  padding: 0.45em 1.1em;
+  border: 0;
+  border-radius: 0.45em;
+  background: var(--ledger);
+  color: #fff;
+  font-weight: 600;
+  font-size: 1em;
+  line-height: 1.2;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  transition: background-color 0.15s ease, transform 0.1s ease;
+  flex: none; /* never squash: teaser.js scales the font instead */
+}
+#export_button:hover:not(:disabled) { background: var(--ledger-dark); }
+#export_button:active:not(:disabled) { transform: translateY(1px); }
+#export_button:disabled { cursor: progress; opacity: 0.85; }
+
+.btn-ico { width: 1.15em; height: 1.15em; flex: none; }
+.btn-ico svg { width: 100%; height: 100%; display: block; }
+
+.spinner {
+  display: none;
+  width: 1em; height: 1em; flex: none;
+  border: 0.14em solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+#export_button.is-busy .spinner { display: inline-block; }
+#export_button.is-busy .btn-ico { display: none; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Small secondary button that opens the showcase */
+.ent-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  padding: 0.45em 0.8em;
+  border: 1px solid var(--grid);
+  border-radius: 0.45em;
+  background: var(--paper);
+  color: var(--ledger);
+  font-size: 0.9em;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+  flex: none;
+}
+.ent-button:hover { border-color: var(--ledger); background: var(--leaf); }
+.ent-button .btn-ico { width: 1.1em; height: 1.1em; }
+
+/* Shrink stages, set by teaser.js as the zone gets smaller:
+   full labels → Enterprise icon only → export icon only → export icon alone */
+.zone-compact.hide-ent-label .ent-label { display: none; }
+.zone-compact.hide-ent-label .ent-button { padding: 0.45em 0.55em; }
+.zone-compact.hide-exp-label #export_button .btn-label { display: none; }
+.zone-compact.hide-exp-label #export_button { padding: 0.45em 0.55em; }
+.zone-compact.hide-ent .ent-button { display: none; }
+
+/* Inline mode: toolbar row above the showcase */
+.zone-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--paper);
+  border-bottom: 1px solid var(--grid);
+  font-size: 15px;
+}
+.zone-toolbar .edition { color: var(--muted); font-size: 13px; }
+
+/* ── Showcase (shared by popup and inline) ─────────────────────────────── */
+.sc {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--page);
+  font-size: 14px;
+  line-height: 1.45;
+}
+.sc-inline { border: 1px solid var(--grid); border-radius: 6px; overflow: hidden; }
+
+/* Formula bar */
+.sc-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 6px 8px 6px 12px;
+  background: var(--paper);
+  border-bottom: 1px solid var(--grid);
+  flex: none;
+}
+.sc-namebox {
+  flex: none;
+  padding: 3px 10px;
+  border: 1px solid var(--grid);
+  font-size: 13px;
+  color: var(--ink);
+  background: var(--paper);
+}
+.sc-fx { flex: none; font-style: italic; font-weight: 700; color: var(--muted); font-size: 14px; }
+.sc-formula {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding-left: 10px;
+  border-left: 1px solid var(--grid);
+  font-size: 13.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sc-formula::before { content: "="; color: var(--muted); }
+
+.sc-icon-btn {
+  flex: none;
+  width: 30px; height: 30px;
+  display: grid; place-items: center;
+  border: 0; border-radius: 4px;
+  background: transparent; color: var(--muted);
+  cursor: pointer;
+}
+.sc-icon-btn:hover { background: var(--leaf); color: var(--ink); }
+.sc-icon-btn svg { width: 16px; height: 16px; }
+
+.sc-link-btn {
+  flex: none;
+  border: 0; background: transparent;
+  color: var(--ledger);
+  font-size: 13px; font-weight: 600;
+  padding: 4px 6px; border-radius: 4px;
+  cursor: pointer;
+}
+.sc-link-btn:hover { background: var(--leaf); }
+
+/* Body: video + text left, sheet right */
+.sc-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: 24px;
+  padding: 20px 22px;
+  align-items: start;
+}
+
+.sc-video {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  background: var(--paper);
+  border: 1px solid var(--grid);
+  overflow: hidden;
+}
+.sc-video video { display: block; width: 100%; height: 100%; object-fit: cover; cursor: pointer; }
+.sc-play {
+  position: absolute; inset: 0; margin: auto;
+  width: 58px; height: 58px;
+  display: grid; place-items: center;
+  border: 0; border-radius: 50%;
+  background: var(--ledger); color: #fff;
+  box-shadow: 0 4px 14px rgba(30, 107, 69, 0.35);
+  cursor: pointer;
+}
+.sc-play svg { width: 26px; height: 26px; margin-left: 3px; }
+
+.sc-title {
+  margin-top: 16px;
+  font-size: 22px;
+  line-height: 1.2;
+  font-weight: 700;
+  letter-spacing: -0.005em;
+}
+.sc-intro { margin-top: 8px; color: var(--muted); max-width: 62ch; }
+
+/* The sheet */
+.sc-grid {
+  position: relative;
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr) 62px 86px;
+  background: var(--paper);
+  border-top: 1px solid var(--grid);
+  border-left: 1px solid var(--grid);
+  font-size: 13.5px;
+}
+.sc-grid > div:not(.sc-sel) {
+  border-right: 1px solid var(--grid);
+  border-bottom: 1px solid var(--grid);
+}
+.sc-hd { height: 22px; }
+.sc-hd, .sc-rn {
+  background: var(--leaf);
+  color: var(--muted);
+  font-size: 11.5px;
+  display: grid; place-items: center;
+  min-height: 22px;
+}
+.sc-hd-sel { color: var(--ledger); font-weight: 700; box-shadow: inset 0 -2px 0 var(--ledger); }
+.sc-c { padding: 7px 9px; display: flex; align-items: center; min-height: 36px; }
+.sc-th { font-weight: 700; }
+.sc-mid { justify-content: center; text-align: center; }
+.sc-ent { background: #f3f9f5; }
+.sc-yes { color: var(--ledger); display: inline-grid; }
+.sc-yes svg { width: 16px; height: 16px; }
+.sc-no { color: #a3b0a8; }
+.sc-text { font-weight: 600; }
+.sc-ent .sc-text { color: var(--ledger); }
+
+/* Selection outline over the Enterprise column, with Excel's fill handle.
+   Absolutely positioned so it never takes part in grid placement. */
+.sc-sel {
+  position: absolute;
+  top: 21px;            /* below the A/B/C header row (22px incl. border) */
+  right: 0;
+  bottom: 0;
+  width: 87px;          /* Enterprise column (86px) + shared gridline */
+  border: 2px solid var(--ledger);
+  pointer-events: none;
+  z-index: 1;
+}
+.sc-sel::after {
+  content: "";
+  position: absolute;
+  right: -5px; bottom: -5px;
+  width: 7px; height: 7px;
+  background: var(--ledger);
+  border: 1px solid var(--paper);
+}
+
+/* Actions */
+.sc-actions {
+  flex: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 18px;
+  padding: 12px 22px;
+  background: var(--paper);
+  border-top: 1px solid var(--grid);
+}
+.sc-cta { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.sc-primary {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 9px 16px;
+  border: 0; border-radius: 6px;
+  background: var(--ledger); color: #fff;
+  font-weight: 600; font-size: 14.5px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+.sc-primary:hover { background: var(--ledger-dark); }
+.sc-primary svg { width: 18px; height: 18px; }
+.sc-note { color: var(--muted); font-size: 12.5px; }
+.sc-optout { display: inline-flex; align-items: center; gap: 7px; color: var(--muted); font-size: 13px; cursor: pointer; }
+.sc-optout input { accent-color: var(--ledger); width: 15px; height: 15px; }
+
+/* ── Contact form (replaces the comparison in the right-hand panel) ───── */
+.sc-panel { min-width: 0; }
+.cf, .cf-done { background: var(--paper); border: 1px solid var(--grid); padding: 16px 16px 14px; }
+.cf-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.cf-title { font-size: 17px; line-height: 1.25; font-weight: 700; }
+.cf-back { display: inline-flex; align-items: center; gap: 4px; }
+.cf-back svg { width: 14px; height: 14px; }
+.cf-lead { margin-top: 4px; color: var(--muted); font-size: 13px; }
+.cf-grid { margin-top: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px; }
+.cf-field { display: flex; flex-direction: column; min-width: 0; }
+.cf-wide { grid-column: 1 / -1; }
+.cf-label { font-size: 12.5px; font-weight: 600; margin-bottom: 4px; }
+.cf-opt { font-weight: 400; color: var(--muted); }
+.cf-input {
+  width: 100%;
+  min-width: 0;
+  padding: 7px 9px;
+  border: 1px solid var(--grid);
+  border-radius: 0;
+  background: var(--paper);
+  font: inherit;
+  font-size: 14px;
+  color: var(--ink);
+}
+.cf-input:focus { outline: none; border-color: var(--ledger); box-shadow: inset 0 0 0 1px var(--ledger); }
+.cf-field.is-invalid .cf-input { border-color: #b3261e; box-shadow: inset 0 0 0 1px #b3261e; }
+.cf-text { resize: vertical; min-height: 64px; line-height: 1.4; }
+select.cf-input { height: 35px; }
+.cf-trap { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
+.cf-err { margin-top: 4px; color: #b3261e; font-size: 12.5px; line-height: 1.35; }
+.cf-hint { margin-top: 4px; color: var(--muted); font-size: 12.5px; line-height: 1.35; overflow-wrap: anywhere; }
+.cf-suggest { overflow-wrap: anywhere; text-align: left; }
+.cf-count { margin-top: 3px; align-self: flex-end; color: var(--muted); font-size: 11.5px; font-variant-numeric: tabular-nums; }
+.cf-count.is-near { color: #8a5a00; }
+.cf-form-error {
+  margin-top: 12px; padding: 8px 10px;
+  border-left: 3px solid #b3261e; background: #fdf1f0;
+  color: #8c1d18; font-size: 13px;
+}
+.cf-submit-row { margin-top: 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.cf-submit:disabled { opacity: 0.75; cursor: progress; }
+.cf-note { color: var(--muted); font-size: 12px; flex: 1 1 180px; }
+.cf-done { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding: 24px 18px; }
+.cf-done:focus { outline: none; }
+.cf-done-icon { color: var(--ledger); width: 32px; height: 32px; }
+.cf-done-icon svg { width: 100%; height: 100%; display: block; }
+.cf-done .cf-lead { margin-bottom: 6px; }
+
+/* Signed-in line in the showcase */
+.sc-user { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 13px; }
+.sc-user strong { color: var(--ink); font-weight: 600; }
+.sc-side { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+
+/* ── Sign-in popup ─────────────────────────────────────────────────────── */
+.si { background: var(--paper); }
+.si-body {
+  flex: 1 1 auto;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  padding: 26px 28px 24px;
+  background: var(--page);
+}
+.si-title { margin-top: 0; }
+.si-lead { margin-top: 6px; color: var(--muted); max-width: 40ch; }
+.si-label { margin-top: 22px; font-weight: 600; font-size: 13.5px; }
+.si-input {
+  margin-top: 6px;
+  padding: 10px 12px;
+  border: 1px solid var(--grid);
+  border-radius: 0;
+  background: var(--paper);
+  font: inherit;
+  font-size: 15px;
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1px transparent;
+}
+.si-input:focus { outline: none; border-color: var(--ledger); box-shadow: inset 0 0 0 1px var(--ledger); }
+.si-input[aria-invalid="true"] { border-color: #b3261e; box-shadow: inset 0 0 0 1px #b3261e; }
+.si-error { margin-top: 6px; color: #b3261e; font-size: 13px; }
+.si-lead strong { color: var(--ink); font-weight: 600; word-break: break-all; }
+.si-code {
+  max-width: 220px;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 0.4em;
+  padding: 8px 12px;
+  font-variant-numeric: tabular-nums;
+}
+.si-links {
+  margin-top: auto;
+  padding-top: 22px;
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 6px;
+  color: var(--muted); font-size: 12.5px;
+}
+.si-submit { margin-top: 18px; align-self: flex-start; }
+.si-submit:disabled { opacity: 0.75; cursor: progress; }
+.si-note { margin-top: auto; padding-top: 22px; color: var(--muted); font-size: 12.5px; max-width: 46ch; }
+.si-inline-link {
+  border: 0; background: none; padding: 0;
+  color: var(--ledger); font-weight: 600; font-size: inherit;
+  text-decoration: underline; cursor: pointer;
+}
+
+/* Narrow layouts: stack video, text and sheet */
+@media (max-width: 720px) {
+  .cf-grid { grid-template-columns: 1fr; }
+  .sc-body { grid-template-columns: 1fr; gap: 18px; padding: 16px; }
+  .sc-actions { padding: 12px 16px; }
+  .sc-namebox { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation-duration: 0.01ms !important; }
+}
