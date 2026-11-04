@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Export to Excel: connection check</title>
+  <link rel="stylesheet" href="./css/app.css">
+  <script src="./js/config.js"></script>
+  <style>
+    body { background: var(--page); }
+    .dg { max-width: 760px; margin: 0 auto; padding: 24px 20px 40px; }
+    .dg h1 { font-size: 22px; }
+    .dg-lead { color: var(--muted); margin-top: 4px; }
+    .dg-info { margin-top: 16px; background: var(--paper); border: 1px solid var(--grid); padding: 12px 14px; font-size: 13.5px; }
+    .dg-info code { font-family: Consolas, "SFMono-Regular", Menlo, monospace; font-size: 13px; overflow-wrap: anywhere; }
+    .dg-info div + div { margin-top: 4px; }
+    .dg-list { margin-top: 16px; display: flex; flex-direction: column; gap: 8px; }
+    .dg-item { display: grid; grid-template-columns: 24px 1fr; gap: 10px; background: var(--paper); border: 1px solid var(--grid); padding: 12px 14px; }
+    .dg-mark { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-size: 13px; color: #fff; background: #a3b0a8; }
+    .dg-item.ok .dg-mark { background: var(--ledger); }
+    .dg-item.bad .dg-mark { background: #b3261e; }
+    .dg-item.skip .dg-mark { background: #c9d2cc; }
+    .dg-title { font-weight: 700; }
+    .dg-detail { margin-top: 2px; color: var(--muted); font-size: 13px; }
+    .dg-fix { margin-top: 6px; font-size: 13px; color: #8c1d18; }
+    .dg-fix code { font-family: Consolas, "SFMono-Regular", Menlo, monospace; background: #fdf1f0; padding: 1px 4px; overflow-wrap: anywhere; }
+    .dg-verdict { margin-top: 16px; padding: 12px 14px; border-left: 4px solid var(--ledger); background: var(--paper); font-weight: 600; }
+    .dg-verdict.bad { border-left-color: #b3261e; }
+    .dg-actions { margin-top: 16px; }
+  </style>
+</head>
+<body>
+  <main class="dg">
+    <h1>Connection check</h1>
+    <p class="dg-lead">Tests every link between this page and the sign-in service, and says which one is broken.</p>
+
+    <div class="dg-info">
+      <div>This page's address (use this as <strong>ALLOW_ORIGIN</strong>): <code id="origin"></code></div>
+      <div>API address from <code>js/config.js</code>: <code id="api"></code></div>
+    </div>
+
+    <div class="dg-list" id="list"></div>
+    <div class="dg-verdict" id="verdict" hidden></div>
+    <div class="dg-actions"><button type="button" class="sc-primary" id="run">Run the check again</button></div>
+  </main>
+
+  <script>
+  (function () {
+    "use strict";
+    var base = (window.ETE_CONFIG && window.ETE_CONFIG.apiBase) || "/api";
+    var apiUrl = new URL(base, location.href).href.replace(/\/+$/, "");
+    var origin = location.origin;
+    document.getElementById("origin").textContent = origin;
+    document.getElementById("api").textContent = apiUrl;
+
+    var list = document.getElementById("list");
+    var verdict = document.getElementById("verdict");
+
+    function item(title) {
+      var el = document.createElement("div");
+      el.className = "dg-item";
+      el.innerHTML = '<span class="dg-mark">…</span><div><div class="dg-title"></div><div class="dg-detail">Checking…</div></div>';
+      el.querySelector(".dg-title").textContent = title;
+      list.appendChild(el);
+      return {
+        set: function (state, detail, fixHtml) {
+          el.className = "dg-item " + state;
+          el.querySelector(".dg-mark").textContent = state === "ok" ? "✓" : state === "bad" ? "!" : "–";
+          el.querySelector(".dg-detail").textContent = detail;
+          if (fixHtml) {
+            var f = document.createElement("div");
+            f.className = "dg-fix";
+            f.innerHTML = fixHtml;
+            el.querySelector(".dg-detail").after(f);
+          }
+        }
+      };
+    }
+
+    function timed(promise, ms) {
+      return Promise.race([promise, new Promise(function (_, rej) { setTimeout(function () { rej(new Error("timeout")); }, ms); })]);
+    }
+
+    function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+
+    function finish(ok, text) {
+      verdict.hidden = false;
+      verdict.className = "dg-verdict" + (ok ? "" : " bad");
+      verdict.textContent = text;
+    }
+
+    async function run() {
+      list.innerHTML = "";
+      verdict.hidden = true;
+
+      // 1. Configuration
+      var c = item("1. API address in config.js");
+      var apiHost = new URL(apiUrl).host;
+      if (apiUrl.indexOf("http://") === 0 && location.protocol === "https:") {
+        c.set("bad", "This page is on https but the API address is http.",
+          "Use the https address of your tunnel, e.g. <code>https://….trycloudflare.com/api</code>. Browsers block http (and localhost) calls from https pages.");
+        return finish(false, "Fix the API address in js/config.js, push, and run this again.");
+      }
+      if (/github\.io$/.test(location.hostname) && new URL(apiUrl).origin === origin) {
+        c.set("bad", "The API address points to GitHub Pages, which can't run the sign-in service.",
+          "Set <code>apiBase</code> in js/config.js to your tunnel address ending in <code>/api</code>, then push.");
+        return finish(false, "Fix the API address in js/config.js, push, and run this again.");
+      }
+      c.set("ok", "Points to " + apiHost + ".");
+
+      // 2. Can this browser reach the server at all? (no-cors: works even without ALLOW_ORIGIN)
+      var r = item("2. This browser can reach the server");
+      var t0 = performance.now();
+      try {
+        await timed(fetch(apiUrl + "/health", { mode: "no-cors", cache: "no-store" }), 10000);
+        r.set("ok", "Reached " + apiHost + " in " + Math.round(performance.now() - t0) + " ms.");
+      } catch (e) {
+        r.set("bad", "No answer from " + apiHost + " (" + (e.message === "timeout" ? "timed out after 10 s" : "connection failed") + ").",
+          "Check, in this order:<br>" +
+          "• Is the server window still running, and the tunnel window showing <code>Registered tunnel connection</code> with no recent errors?<br>" +
+          "• Is <code>" + esc(apiHost) + "</code> the address the tunnel window shows <em>now</em>? It changes every time cloudflared restarts.<br>" +
+          "• Open <code>" + esc(apiUrl) + "/health</code> in a new tab. If it doesn't load here but loads on a phone (mobile data), " +
+          "your network, VPN or security software is blocking <code>trycloudflare.com</code>. Try another network, or ask IT to allow it.");
+        item("3. The server allows this site (ALLOW_ORIGIN)").set("skip", "Skipped: fix step 2 first.");
+        item("4. Sign-in requests get through").set("skip", "Skipped: fix step 2 first.");
+        return finish(false, "The server can't be reached from this browser. See step 2.");
+      }
+
+      // 3. CORS for this site
+      var o = item("3. The server allows this site (ALLOW_ORIGIN)");
+      try {
+        var res = await timed(fetch(apiUrl + "/health", { cache: "no-store" }), 10000);
+        var data = await res.json();
+        if (!data.ok) throw new Error("unexpected answer");
+        o.set("ok", "Allowed.");
+      } catch (e) {
+        o.set("bad", "The server answered, but doesn't allow pages from " + origin + ".",
+          "Stop the server (Ctrl + C) and start it again <strong>in the same window</strong> with:<br>" +
+          "Command Prompt: <code>set \"ALLOW_ORIGIN=" + esc(origin) + "\"</code> then <code>node dev/server.mjs</code><br>" +
+          "PowerShell: <code>$env:ALLOW_ORIGIN=\"" + esc(origin) + "\"</code> then <code>node dev/server.mjs</code><br>" +
+          "The server's first lines must show <code>API open to: " + esc(origin) + "</code>.");
+        item("4. Sign-in requests get through").set("skip", "Skipped: fix step 3 first.");
+        return finish(false, "ALLOW_ORIGIN is missing or wrong on the computer running the server. See step 3.");
+      }
+
+      // 4. A real sign-in style request (JSON POST). Uses an invalid address on purpose: no email is sent.
+      var p = item("4. Sign-in requests get through");
+      try {
+        var res2 = await timed(fetch(apiUrl + "/auth/start", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: "connection-check@invalid" }), cache: "no-store"
+        }), 10000);
+        var d2 = await res2.json().catch(function () { return {}; });
+        if (res2.status === 400 && d2.error === "invalid_email") {
+          p.set("ok", "The sign-in service answered as expected (test request, no email sent).");
+        } else {
+          p.set("bad", "Unexpected answer: HTTP " + res2.status + " " + JSON.stringify(d2),
+            "Make sure the tunnel points to the dev server: <code>cloudflared tunnel --url http://localhost:8765</code>.");
+          return finish(false, "The server answered oddly. See step 4.");
+        }
+      } catch (e) {
+        p.set("bad", "Simple requests work, but sign-in requests are blocked.",
+          "Restart the server with the latest <code>dev/server.mjs</code> (it must answer the browser's pre-check, OPTIONS) and the correct ALLOW_ORIGIN.");
+        return finish(false, "Sign-in requests are blocked. See step 4.");
+      }
+
+      finish(true, "Everything works from this browser. If sign-in still fails inside Tableau, reload the extension (or the dashboard) so it picks up the latest files.");
+    }
+
+    document.getElementById("run").addEventListener("click", run);
+    run();
+  })();
+  </script>
+</body>
+</html>
